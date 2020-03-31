@@ -38,11 +38,13 @@ impl EnrManager {
 	}
 
 	pub fn set_node_endpoint(&mut self, endpoint: &NodeEndpoint) {
+		const ENR_PROOF: &str = "Not enough data to go over the limit; qed";
+
 		let seq = self.inner.seq();
-		self.inner.set_tcp_socket(endpoint.address, &self.secret).expect("Not enough data to go over the limit; qed");
-		self.inner.set_udp(endpoint.udp_port, &self.secret).expect("Not enough data to go over the limit; qed");
-		// TODO: what if we overflow here? Reset the node private key? That would require force crashing the client?
-		self.inner.set_seq(seq + 1, &self.secret).unwrap();
+		self.inner.set_tcp_socket(endpoint.address, &self.secret).expect(ENR_PROOF);
+		self.inner.set_udp(endpoint.udp_port, &self.secret).expect(ENR_PROOF);
+		// We just wrap here, unlikely to be a problem in our lifetimes unless the user sets seq high enough on purpose.
+		self.inner.set_seq(seq.checked_add(1).unwrap_or(0), &self.secret).expect(ENR_PROOF);
 	}
 
 	pub fn as_enr(&self) -> &Enr {
