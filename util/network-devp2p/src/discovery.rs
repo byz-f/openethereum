@@ -533,8 +533,12 @@ impl Discovery {
 		let ping_to = NodeEndpoint::from_rlp(&rlp.at(2)?)?;
 		let timestamp: u64 = rlp.val_at(3)?;
 		self.check_timestamp(timestamp)?;
-		// let enr_seq = rlp.val_at::<u64>(4).ok();
-		let mut response = RlpStream::new_list(4);
+		let enr_seq = rlp.val_at::<u64>(4).ok();
+		let mut response = RlpStream::new_list(3 + if enr_seq.is_some() {
+			1
+		} else {
+			0
+		});
 		let pong_to = NodeEndpoint {
 			address: from,
 			udp_port: ping_from.udp_port
@@ -549,7 +553,9 @@ impl Discovery {
 
 		response.append(&echo_hash);
 		append_expiration(&mut response);
-		response.append(&self.enr.seq());
+		if enr_seq.is_some() {
+			response.append(&self.enr.seq());
+		}
 		self.send_packet(PACKET_PONG, from, response.drain())?;
 
 		let entry = NodeEntry { id: node_id, endpoint: pong_to };
