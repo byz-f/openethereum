@@ -11,7 +11,6 @@ pub struct EnrManager {
 	inner: Enr,
 }
 
-#[allow(dead_code)]
 impl EnrManager {
     pub fn new(key: Secret, seq: u64) -> Option<Self> {
 		let secret = key.to_secp256k1_secret().ok()?;
@@ -32,6 +31,7 @@ impl EnrManager {
 		Some(Self { secret, inner })
 	}
 
+	#[cfg(test)]
 	pub fn with_node_endpoint(mut self, endpoint: &NodeEndpoint) -> Self {
 		self.set_node_endpoint(endpoint);
 		self
@@ -51,6 +51,7 @@ impl EnrManager {
 		&self.inner
 	}
 
+	#[cfg(test)]
 	pub fn into_enr(self) -> Enr {
 		self.inner
 	}
