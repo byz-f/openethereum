@@ -20,7 +20,7 @@ pub trait DiskEntity: Sized {
 
 impl DiskEntity for Secret {
 	const FILENAME: &'static str = "key";
-	const DESCRIPTION: &'static str = "key file";
+	const DESCRIPTION: &'static str = "node key";
 
 	fn to_repr(&self) -> String {
 		self.to_hex()
