@@ -1,3 +1,7 @@
+//! This module is a utility for when you need to persist some small amount of data on disk,
+//! e.g. a secret or a snippet of user configuration. Implement `DiskEntity` for your type
+//! and call `save` to persist it to disk or `load` to retrieve it again.
+
 use log::*;
 use parity_crypto::publickey::Secret;
 use parity_path::restrict_permissions_owner;
@@ -31,6 +35,7 @@ impl DiskEntity for Secret {
 	}
 }
 
+/// Persist item to disk. It does not perform synchronization and should not be called from multiple threads simultaneously.
 pub(crate) fn save<E: DiskEntity>(path: &Path, entity: &E) {
 	let mut path_buf = PathBuf::from(path);
 	if let Err(e) = fs::create_dir_all(path_buf.as_path()) {
@@ -47,13 +52,14 @@ pub(crate) fn save<E: DiskEntity>(path: &Path, entity: &E) {
 		}
 	};
 	if let Err(e) = restrict_permissions_owner(path, true, false) {
-		warn!(target: "network", "Failed to modify permissions of the file ({})", e);
+		warn!("Failed to modify permissions of the file ({})", e);
 	}
 	if let Err(e) = file.write(&entity.to_repr().into_bytes()) {
-		warn!("Error writing {}: {:?}", E::DESCRIPTION, e);
+		warn!("Failed to persist {} to disk: {:?}", E::DESCRIPTION, e);
 	}
 }
 
+/// Load item from disk. It does not modify data on disk and is thread-safe to call.
 pub(crate) fn load<E>(path: &Path) -> Option<E>
 where
 	E: DiskEntity,
